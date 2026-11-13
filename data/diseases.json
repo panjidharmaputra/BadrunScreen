@@ -1,0 +1,37 @@
+{
+    "P01": {
+        "name": "Demam Berdarah Dengue (DBD)",
+        "recommendation": "Perbanyak minum air, istirahat total, dan konsumsi paracetamol. Segera ke dokter/IGD jika lemas parah atau ada pendarahan.",
+        "red_flag": true
+    },
+    "P02": {
+        "name": "Influenza",
+        "recommendation": "Istirahat cukup, konsumsi makanan bergizi, vitamin C, dan air putih hangat.",
+        "red_flag": false
+    },
+    "P03": {
+        "name": "Tifoid (Tipes)",
+        "recommendation": "Makan makanan lunak, hindari makanan pedas/asam, istirahat total. Segera periksa ke dokter untuk mendapatkan antibiotik.",
+        "red_flag": true
+    },
+    "P04": {
+        "name": "ISPA (Infeksi Saluran Pernapasan Akut)",
+        "recommendation": "Gunakan masker, minum air hangat, istirahat. Jika sesak napas, segera ke fasilitas kesehatan.",
+        "red_flag": false
+    },
+    "P05": {
+        "name": "Indikasi Diabetes",
+        "recommendation": "Kurangi asupan gula. Segera lakukan cek gula darah puasa di klinik atau rumah sakit.",
+        "red_flag": false
+    },
+    "P06": {
+        "name": "Indikasi COVID-19",
+        "recommendation": "Segera isolasi mandiri, pakai masker, konsumsi vitamin. Lakukan tes Swab Antigen/PCR. Jika sesak berat, segera ke RS.",
+        "red_flag": true
+    },
+    "P07": {
+        "name": "Gangguan Lambung / Dispepsia (Maag)",
+        "recommendation": "Makan teratur dengan porsi kecil tapi sering, hindari makanan pedas/asam/kopi, dan kelola stres.",
+        "red_flag": false
+    }
+}

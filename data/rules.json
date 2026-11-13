@@ -1,0 +1,37 @@
+[
+    {
+        "id": "R01",
+        "disease": "P01",
+        "conditions": ["G01", "G02", "G03", "G04"]
+    },
+    {
+        "id": "R02",
+        "disease": "P02",
+        "conditions": ["G01", "G06", "G07", "G08"]
+    },
+    {
+        "id": "R03",
+        "disease": "P03",
+        "conditions": ["G01", "G05", "G09", "G13"]
+    },
+    {
+        "id": "R04",
+        "disease": "P04",
+        "conditions": ["G06", "G07", "G08", "G12"]
+    },
+    {
+        "id": "R05",
+        "disease": "P05",
+        "conditions": ["G10", "G11", "G12"]
+    },
+    {
+        "id": "R06",
+        "disease": "P06",
+        "conditions": ["G01", "G06", "G12", "G14", "G15"]
+    },
+    {
+        "id": "R07",
+        "disease": "P07",
+        "conditions": ["G05", "G09", "G16", "G17"]
+    }
+]

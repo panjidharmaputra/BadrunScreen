@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BadrunScreen AI - Sistem Skrining Kesehatan Cerdas</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+    <style>
+        :root {
+            --bg: #060d12;
+            --bg2: #0a141b;
+            --card: rgba(13, 26, 32, 0.74);
+            --card-border: rgba(45, 212, 191, 0.16);
+            --glow: #2dd4bf;
+            --glow2: #38bdf8;
+            --violet: #a78bfa;
+            --mint: #5eead4;
+            --coat: #f8fafc;
+            --text: #e8eef7;
+            --muted: #93a1b8;
+            --danger: #f87171;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --font-d: 'Outfit', sans-serif;
+            --font-b: 'Inter', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-b);
+            background:
+                radial-gradient(1200px 600px at 50% -8%, rgba(45, 212, 191, 0.10), transparent 60%),
+                radial-gradient(900px 500px at 85% 30%, rgba(56, 189, 248, 0.06), transparent 60%),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        /* ===== LATAR SALIB MEDIS SAMAR ===== */
+        .med-crosses {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .5;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cpath d='M64 52h12v12h12v12H76v12H64V76H52V64h12z' fill='%232dd4bf' fill-opacity='0.05'/%3E%3C/svg%3E");
+        }
+        /* ===== BACKGROUND INTERAKTIF ===== */
+        #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .orb { position: fixed; border-radius: 50%; filter: blur(130px); z-index: 0; opacity: .35; pointer-events: none; animation: drift 22s infinite alternate ease-in-out; }
+        .orb.o1 { width: 480px; height: 480px; background: #0ea5e9; top: -140px; left: -120px; }
+        .orb.o2 { width: 420px; height: 420px; background: #7c3aed; bottom: -120px; right: -100px; animation-delay: -8s; }
+        .orb.o3 { width: 300px; height: 300px; background: #2dd4bf; top: 40%; left: 60%; opacity: .18; animation-delay: -14s; }
+        @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(60px, 40px) scale(1.12); } }
+        .grid-overlay { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .05;
+            background-image: linear-gradient(rgba(45,212,191,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(45,212,191,.6) 1px, transparent 1px);
+            background-size: 46px 46px;
+            mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 75%);
+        }
+        .wrap { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; padding: 0 1.4rem; }
+
+        /* ===== NAVBAR ===== */
+        nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: rgba(7,11,20,.78); border-bottom: 1px solid var(--card-border); }
+        .nav-inner { max-width: 1180px; margin: 0 auto; padding: .85rem 1.4rem; display: flex; align-items: center; justify-content: space-between; }
+        .brand { display: flex; align-items: center; gap: .7rem; font-family: var(--font-d); font-weight: 800; font-size: 1.25rem; letter-spacing: .3px; }
+        .brand img { width: 38px; height: 38px; border-radius: 10px; box-shadow: 0 0 18px rgba(45,212,191,.45); }
+        .brand span b { color: var(--glow); }
+        .nav-links { display: flex; gap: 1.4rem; }
+        .nav-links a { color: var(--muted); text-decoration: none; font-size: .92rem; font-weight: 500; transition: .2s; }
+        .nav-links a:hover { color: var(--glow); }
+        @media (max-width: 760px) { .nav-links { display: none; } }
+
+        /* ===== HERO ===== */
+        .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 2.5rem; align-items: center; padding: 4.2rem 0 3rem; }
+        @media (max-width: 860px) { .hero { grid-template-columns: 1fr; text-align: center; } }
+        .badge { display: inline-flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--glow); border: 1px solid var(--card-border); background: rgba(45,212,191,.07); padding: .4rem .9rem; border-radius: 999px; margin-bottom: 1.1rem; }
+        .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px var(--success); animation: pulse 1.6s infinite; }
+        @keyframes pulse { 50% { opacity: .4; } }
+        .hero h1 { font-family: var(--font-d); font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 800; line-height: 1.08; margin-bottom: 1rem; }
+        .hero h1 .grad { background: linear-gradient(90deg, var(--glow), var(--glow2), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .08em; }
+        .hero p { color: var(--muted); font-size: 1.02rem; line-height: 1.7; margin-bottom: 1.8rem; max-width: 34rem; }
+        @media (max-width: 860px) { .hero p { margin-left: auto; margin-right: auto; } }
+        .cta-row { display: flex; gap: .9rem; flex-wrap: wrap; }
+        @media (max-width: 860px) { .cta-row { justify-content: center; } }
+        .btn { display: inline-flex; align-items: center; gap: .6rem; padding: .85rem 1.7rem; border-radius: 12px; font-weight: 600; font-size: .95rem; cursor: pointer; border: none; text-decoration: none; transition: .25s; font-family: var(--font-b); }
+        .btn-primary { background: linear-gradient(90deg, #0891b2, #2563eb); color: #fff; box-shadow: 0 8px 28px rgba(45,212,191,.28); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(45,212,191,.4); }
+        .btn-ghost { background: rgba(255,255,255,.05); color: var(--text); border: 1px solid var(--card-border); }
+        .btn-ghost:hover { border-color: var(--glow); color: var(--glow); }
+        .hero-art { position: relative; display: flex; justify-content: center; }
+        .hero-art img { width: min(340px, 80%); border-radius: 24px; box-shadow: 0 24px 70px rgba(45,212,191,.22); animation: floaty 5s ease-in-out infinite; mask-image: linear-gradient(to bottom, black 82%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 82%, transparent 100%); }
+        @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+        .hero-chip { position: absolute; background: var(--card); border: 1px solid var(--card-border); backdrop-filter: blur(10px); border-radius: 14px; padding: .6rem .95rem; font-size: .8rem; display: flex; align-items: center; gap: .55rem; box-shadow: 0 10px 30px rgba(0,0,0,.4); animation: floaty 6s ease-in-out infinite; }
+        .hero-chip i { color: var(--glow); }
+        .hc1 { top: 8%; left: 2%; animation-delay: -2s; }
+        .hc2 { bottom: 14%; right: 0; animation-delay: -4s; }
+
+        /* ===== STAT STRIP ===== */
+        .stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0 0; }
+        @media (max-width: 760px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }
+        .stat-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; padding: 1.3rem 1.2rem; backdrop-filter: blur(12px); transition: .25s; position: relative; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-4px); border-color: rgba(45,212,191,.4); }
+        .stat-card::before { content:''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--glow), var(--violet)); opacity: .7; }
+        .stat-card .ico { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; margin-bottom: .8rem; background: rgba(45,212,191,.1); color: var(--glow); }
+        .stat-card .num { font-family: var(--font-d); font-size: 1.9rem; font-weight: 800; }
+        .stat-card .num small { font-size: 1rem; color: var(--muted); font-weight: 600; }
+        .stat-card .lbl { color: var(--muted); font-size: .83rem; margin-top: .25rem; }
+
+        /* ===== SECTION ===== */
+        section { padding: 3.4rem 0 1rem; }
+        .sec-head { text-align: center; margin-bottom: 2.2rem; }
+        .sec-head .kicker { color: var(--glow); font-size: .8rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; }
+        .sec-head h2 { font-family: var(--font-d); font-size: 1.9rem; font-weight: 700; margin: .5rem 0 .6rem; }
+        .sec-head p { color: var(--muted); max-width: 38rem; margin: 0 auto; line-height: 1.7; font-size: .95rem; }
+
+        /* ===== DASHBOARD CHARTS ===== */
+        .chart-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 1.2rem; }
+        @media (max-width: 860px) { .chart-grid { grid-template-columns: 1fr; } }
+        .panel { background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; padding: 1.4rem; backdrop-filter: blur(12px); }
+        .panel h3 { font-family: var(--font-d); font-size: 1.05rem; margin-bottom: .3rem; display: flex; align-items: center; gap: .6rem; }
+        .panel h3 i { color: var(--glow); }
+        .panel .sub { color: var(--muted); font-size: .82rem; margin-bottom: 1rem; }
+        .chart-box { position: relative; height: 290px; }
+        .chart-box.sm { height: 260px; }
+        .chart-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.2rem; }
+        @media (max-width: 860px) { .chart-row2 { grid-template-columns: 1fr; } }
+
+        /* ===== SKRINING ===== */
+        .screen-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 20px; padding: 2rem; backdrop-filter: blur(12px); }
+        .sym-group { margin-bottom: 1.6rem; }
+        .sym-group > h4 { font-family: var(--font-d); color: var(--glow); margin-bottom: .8rem; display: flex; align-items: center; gap: .55rem; text-transform: uppercase; letter-spacing: 1px; font-size: .82rem; }
+        .chips { display: flex; flex-wrap: wrap; gap: .6rem; }
+        .chip { display: inline-flex; align-items: center; gap: .55rem; padding: .62rem 1rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); font-size: .86rem; cursor: pointer; transition: .2s; user-select: none; }
+        .chip i { color: var(--muted); transition: .2s; }
+        .chip:hover { border-color: var(--glow); }
+        .chip.on { background: linear-gradient(90deg, rgba(45,212,191,.18), rgba(79,172,254,.18)); border-color: var(--glow); color: #fff; box-shadow: 0 0 16px rgba(45,212,191,.25); }
+        .chip.on i { color: var(--glow); }
+        .screen-actions { display: flex; gap: .9rem; align-items: center; margin-top: 1.8rem; flex-wrap: wrap; }
+        .counter { color: var(--muted); font-size: .88rem; }
+        .counter b { color: var(--glow); font-size: 1.05rem; }
+        .spinner { display: none; align-items: center; gap: .7rem; color: var(--glow); font-size: .9rem; margin-top: 1.2rem; }
+        .spinner.show { display: flex; }
+        .spin { width: 22px; height: 22px; border: 3px solid rgba(45,212,191,.2); border-top-color: var(--glow); border-radius: 50%; animation: rot 0.8s linear infinite; }
+        @keyframes rot { to { transform: rotate(360deg); } }
+
+        /* ===== HASIL ===== */
+        #results { margin-top: 2rem; display: none; }
+        #results.show { display: block; animation: fadeUp .5s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } }
+        .result-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; padding: 1.6rem; margin-bottom: 1.2rem; backdrop-filter: blur(12px); }
+        .result-card.top { border-color: rgba(45,212,191,.45); box-shadow: 0 0 34px rgba(45,212,191,.12); }
+        .reason-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; padding: 1.1rem 1.4rem; margin-bottom: 1.4rem; backdrop-filter: blur(12px); }
+        .reason-card summary { cursor: pointer; font-weight: 800; font-size: 1.02rem; list-style: none; display: flex; align-items: center; gap: .6rem; }
+        .reason-card summary::-webkit-details-marker { display: none; }
+        .reason-card summary i.fa-brain { color: var(--glow); }
+        .reason-hint { font-weight: 400; font-size: .8rem; color: var(--muted); }
+        .reason-body h4 { margin: 1rem 0 .4rem; font-size: .95rem; }
+        .reason-body h4 i { color: var(--glow); margin-right: .3rem; }
+        .reason-tag { font-weight: 400; font-size: .78rem; color: var(--muted); }
+        .reason-step { border: 1px dashed var(--card-border); border-radius: 12px; padding: .7rem .9rem; margin-bottom: .55rem; background: rgba(255,255,255,.02); }
+        .reason-step-head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-bottom: .45rem; font-size: .88rem; }
+        .reason-sub { font-size: .84rem; color: var(--muted); line-height: 1.7; }
+        .reason-bwd { margin-bottom: .9rem; }
+        .reason-bwd > b { font-size: .88rem; color: var(--glow); }
+        .proof-line { font-size: .82rem; line-height: 1.75; color: var(--muted); }
+        .proof-line.ok { color: var(--success); } .proof-line.ok i { color: var(--success); }
+        .proof-line.miss { color: #f87171; } .proof-line.miss i { color: #f87171; }
+        .proof-line i { margin-right: .35rem; }
+        .res-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .res-title { display: flex; gap: .9rem; align-items: center; }
+        .res-ico { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, rgba(45,212,191,.2), rgba(94,234,212,.2)); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--glow); flex-shrink: 0; }
+        .res-title h3 { font-family: var(--font-d); font-size: 1.2rem; }
+        .res-title .rank { font-size: .75rem; color: var(--muted); }
+        .badges { display: flex; gap: .5rem; flex-wrap: wrap; }
+        .pill { font-size: .74rem; font-weight: 600; padding: .32rem .75rem; border-radius: 999px; display: inline-flex; align-items: center; gap: .4rem; }
+        .pill.ml { background: rgba(52,211,153,.13); color: var(--success); border: 1px solid rgba(52,211,153,.35); }
+        .pill.red { background: rgba(248,113,113,.13); color: var(--danger); border: 1px solid rgba(248,113,113,.4); animation: pulse 1.8s infinite; }
+        .conf-bar { height: 10px; background: rgba(255,255,255,.07); border-radius: 999px; overflow: hidden; margin: .4rem 0 1.1rem; }
+        .conf-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--glow), var(--glow2)); width: 0; transition: width 1s ease; box-shadow: 0 0 12px rgba(45,212,191,.5); }
+        .conf-lbl { display: flex; justify-content: space-between; font-size: .82rem; color: var(--muted); margin-bottom: .2rem; }
+        .conf-lbl b { color: var(--glow); font-family: var(--font-d); font-size: 1rem; }
+        .sym-tags { display: flex; flex-wrap: wrap; gap: .45rem; margin: .6rem 0 1rem; }
+        .tag { font-size: .76rem; padding: .3rem .7rem; border-radius: 8px; }
+        .tag.ok { background: rgba(52,211,153,.12); color: var(--success); border: 1px solid rgba(52,211,153,.3); }
+        .tag.miss { background: rgba(255,255,255,.04); color: var(--muted); border: 1px dashed rgba(255,255,255,.18); }
+        .tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: .9rem; }
+        .tab-btn { background: none; border: 1px solid rgba(255,255,255,.12); color: var(--muted); font-size: .8rem; font-weight: 600; padding: .5rem .95rem; border-radius: 10px; cursor: pointer; transition: .2s; font-family: var(--font-b); display: inline-flex; gap: .45rem; align-items: center; }
+        .tab-btn.active, .tab-btn:hover { color: var(--glow); border-color: var(--glow); background: rgba(45,212,191,.07); }
+        .tab-pane { display: none; animation: fadeUp .35s ease; }
+        .tab-pane.active { display: block; }
+        .sol-list { list-style: none; display: grid; gap: .55rem; }
+        .sol-list li { display: flex; gap: .7rem; font-size: .88rem; line-height: 1.6; color: #d4dce8; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.06); padding: .65rem .9rem; border-radius: 10px; }
+        .sol-list li i { color: var(--success); margin-top: .25rem; flex-shrink: 0; }
+        .sol-list.warn li i { color: var(--danger); }
+        .sol-list.drug li i { color: var(--violet); }
+        .disclaimer-box { margin-top: .9rem; font-size: .78rem; color: var(--muted); background: rgba(251,191,36,.06); border: 1px solid rgba(251,191,36,.25); border-radius: 10px; padding: .7rem .95rem; line-height: 1.6; }
+        .disclaimer-box i { color: var(--warning); margin-right: .4rem; }
+        .reco-box { font-size: .9rem; line-height: 1.7; background: rgba(45,212,191,.05); border-left: 3px solid var(--glow); padding: .8rem 1rem; border-radius: 0 10px 10px 0; margin-bottom: 1rem; color: #d4dce8; }
+
+        /* ===== ENSIKLOPEDIA ===== */
+        .disease-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+        @media (max-width: 900px) { .disease-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .disease-grid { grid-template-columns: 1fr; } }
+        .d-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; padding: 1.4rem; backdrop-filter: blur(12px); transition: .25s; cursor: pointer; position: relative; }
+        .d-card:hover { transform: translateY(-5px); border-color: rgba(45,212,191,.45); box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+        .d-card .d-ico { width: 48px; height: 48px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; background: linear-gradient(135deg, rgba(45,212,191,.18), rgba(94,234,212,.18)); color: var(--glow); margin-bottom: .9rem; }
+        .d-card h3 { font-family: var(--font-d); font-size: 1.02rem; margin-bottom: .45rem; padding-right: 1.6rem; }
+        .d-card p { color: var(--muted); font-size: .83rem; line-height: 1.6; margin-bottom: .9rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .d-card .more { font-size: .8rem; color: var(--glow); font-weight: 600; }
+        .d-card .flag { position: absolute; top: 1.1rem; right: 1.1rem; color: var(--danger); font-size: 1rem; }
+
+        /* ===== MODAL ===== */
+        .modal-bg { position: fixed; inset: 0; background: rgba(3,6,12,.8); backdrop-filter: blur(6px); z-index: 100; display: none; align-items: flex-start; justify-content: center; padding: 3rem 1rem; overflow-y: auto; }
+        .modal-bg.show { display: flex; animation: fadeUp .3s ease; }
+        .modal { background: #0d1424; border: 1px solid var(--card-border); border-radius: 20px; max-width: 640px; width: 100%; padding: 2rem; position: relative; }
+        .modal .x { position: absolute; top: 1.1rem; right: 1.2rem; background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; }
+        .modal .x:hover { color: var(--danger); }
+        .modal h3 { font-family: var(--font-d); font-size: 1.4rem; margin-bottom: .4rem; padding-right: 2rem; }
+        .modal .m-sub { color: var(--muted); font-size: .86rem; margin-bottom: 1.3rem; }
+        .modal h4 { font-family: var(--font-d); font-size: .92rem; color: var(--glow); margin: 1.3rem 0 .7rem; display: flex; gap: .5rem; align-items: center; }
+
+        /* ===== TOOLS ===== */
+        .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+        @media (max-width: 860px) { .tools-grid { grid-template-columns: 1fr; } }
+        .tool-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; padding: 1.6rem; backdrop-filter: blur(12px); }
+        .tool-card h3 { font-family: var(--font-d); font-size: 1.05rem; margin-bottom: .4rem; display: flex; align-items: center; gap: .6rem; }
+        .tool-card h3 i { color: var(--glow); }
+        .tool-card .sub { color: var(--muted); font-size: .83rem; margin-bottom: 1.1rem; }
+        .field { margin-bottom: .9rem; }
+        .field label { display: block; font-size: .82rem; color: var(--muted); margin-bottom: .4rem; }
+        .field input { width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: .7rem .9rem; color: var(--text); font-size: .92rem; font-family: var(--font-b); }
+        .field input:focus { outline: none; border-color: var(--glow); }
+        .bmi-result { margin-top: 1rem; padding: 1rem; border-radius: 12px; background: rgba(45,212,191,.06); border: 1px solid var(--card-border); display: none; }
+        .bmi-result.show { display: block; animation: fadeUp .4s ease; }
+        .bmi-result .val { font-family: var(--font-d); font-size: 2rem; font-weight: 800; color: var(--glow); }
+        .bmi-result .cat { font-weight: 700; margin: .3rem 0; }
+        .bmi-result .tip { font-size: .84rem; color: var(--muted); line-height: 1.6; }
+        .myth-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: .95rem 1.05rem; margin-bottom: .7rem; cursor: pointer; transition: .2s; }
+        .myth-card:hover { border-color: var(--glow); }
+        .myth-card .myth { font-size: .88rem; font-weight: 600; display: flex; gap: .6rem; align-items: flex-start; }
+        .myth-card .myth i { color: var(--danger); margin-top: .2rem; }
+        .myth-card .fact { display: none; margin-top: .7rem; font-size: .84rem; color: var(--success); line-height: 1.65; border-top: 1px dashed rgba(255,255,255,.12); padding-top: .7rem; }
+        .myth-tag { display: inline-block; font-size: .68rem; font-weight: 800; letter-spacing: .04em; color: var(--glow); border: 1px solid rgba(45,212,191,.4); border-radius: 20px; padding: .05rem .55rem; margin-right: .4rem; vertical-align: middle; }
+        .myth-card.open .fact { display: block; }
+        .myth-card.open .myth i { color: var(--warning); }
+        .hist-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+        .hist-table th { text-align: left; color: var(--muted); font-weight: 600; padding: .55rem .5rem; border-bottom: 1px solid rgba(255,255,255,.1); font-size: .76rem; text-transform: uppercase; letter-spacing: .5px; }
+        .hist-table td { padding: .6rem .5rem; border-bottom: 1px solid rgba(255,255,255,.05); }
+        .hist-empty { color: var(--muted); font-size: .86rem; text-align: center; padding: 1.2rem 0; }
+        .emg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+        .emg { display: flex; align-items: center; gap: .8rem; background: rgba(248,113,113,.06); border: 1px solid rgba(248,113,113,.25); border-radius: 12px; padding: .85rem 1rem; text-decoration: none; color: var(--text); transition: .2s; }
+        .emg:hover { background: rgba(248,113,113,.12); transform: translateY(-2px); }
+        .emg i { font-size: 1.3rem; color: var(--danger); }
+        .emg b { font-family: var(--font-d); font-size: 1.15rem; display: block; }
+        .emg small { color: var(--muted); font-size: .76rem; }
+
+        /* ===== CHATBOT ===== */
+        #bot-fab { position: fixed; bottom: 1.6rem; right: 1.6rem; z-index: 90; width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--glow); cursor: pointer; overflow: hidden; box-shadow: 0 10px 34px rgba(45,212,191,.45); transition: .25s; background: var(--bg2); padding: 0; }
+        #bot-fab:hover { filter: brightness(1.12); }
+        @keyframes botFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes botGlow { 0%,100% { box-shadow: 0 10px 34px rgba(45,212,191,.45); } 50% { box-shadow: 0 10px 48px rgba(45,212,191,.8), 0 0 0 7px rgba(45,212,191,.10); } }
+        #bot-fab { animation: botFloat 3.4s ease-in-out infinite, botGlow 3.4s ease-in-out infinite; }
+        @keyframes botSpeak { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-3px) rotate(-3deg); } 75% { transform: translateY(-3px) rotate(3deg); } }
+        .bot-head img.speaking { animation: botSpeak .45s ease-in-out infinite; border-color: var(--glow); }
+        #bot-fab img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+        #bot-fab .ping { position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--success); border: 2px solid var(--bg); }
+        #bot-panel { position: fixed; bottom: 6.4rem; right: 1.6rem; z-index: 90; width: min(360px, calc(100vw - 2rem)); height: 480px; max-height: calc(100vh - 9rem); background: #0c1322; border: 1px solid var(--card-border); border-radius: 20px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+        #bot-panel.show { display: flex; animation: fadeUp .3s ease; }
+        .bot-head { display: flex; align-items: center; gap: .8rem; padding: .95rem 1.1rem; background: linear-gradient(90deg, rgba(248,250,252,.10), rgba(45,212,191,.16), rgba(56,189,248,.14)); border-bottom: 1px solid var(--card-border); }
+        .bot-head img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid var(--coat); box-shadow: 0 0 0 2px var(--glow); }
+        .bot-head .nm { font-family: var(--font-d); font-weight: 700; font-size: .95rem; }
+        .bot-head .st { font-size: .74rem; color: var(--success); display: flex; align-items: center; gap: .35rem; }
+        .bot-head .st::before { content:''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; }
+        .bot-head .x { margin-left: auto; background: none; border: none; color: var(--muted); font-size: 1.15rem; cursor: pointer; }
+        #bot-msgs { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .7rem; }
+        .msg { max-width: 85%; padding: .65rem .9rem; border-radius: 14px; font-size: .84rem; line-height: 1.6; animation: fadeUp .3s ease; }
+        .msg.bot { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg.user { background: linear-gradient(90deg, #0891b2, #2563eb); align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg.typing { display: flex; gap: 5px; padding: .85rem 1rem; }
+        .msg.typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: pulse 1s infinite; }
+        .msg.typing span:nth-child(2) { animation-delay: .15s; } .msg.typing span:nth-child(3) { animation-delay: .3s; }
+        .quick-row { display: flex; gap: .45rem; flex-wrap: wrap; padding: 0 1rem .6rem; }
+        .quick { font-size: .74rem; padding: .42rem .75rem; border-radius: 999px; border: 1px solid var(--card-border); background: rgba(45,212,191,.06); color: var(--glow); cursor: pointer; transition: .2s; }
+        .quick:hover { background: rgba(45,212,191,.16); }
+        .bot-input { display: flex; gap: .5rem; padding: .8rem 1rem 1rem; }
+        .bot-input input { flex: 1; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: .65rem .9rem; color: var(--text); font-size: .85rem; font-family: var(--font-b); }
+        .bot-input input:focus { outline: none; border-color: var(--glow); }
+        .bot-input button { width: 42px; height: 42px; border-radius: 12px; border: none; background: linear-gradient(90deg, #0891b2, #2563eb); color: #fff; cursor: pointer; font-size: 1rem; }
+
+        /* ===== FOOTER ===== */
+        footer { margin-top: 4rem; border-top: 1px solid var(--card-border); padding: 2.2rem 0; position: relative; z-index: 2; }
+        .foot-inner { max-width: 1180px; margin: 0 auto; padding: 0 1.4rem; display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
+        .foot-inner .brand { font-size: 1.05rem; }
+        .foot-note { color: var(--muted); font-size: .8rem; max-width: 34rem; line-height: 1.7; }
+        .foot-note i { color: var(--warning); }
+    </style>
+</head>
+<body>
+<div class="med-crosses"></div>
+<canvas id="particles"></canvas>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="grid-overlay"></div>
+
+<script>
+const SYMPTOMS = {{ symptoms|tojson }};
+const DISEASES = {{ diseases|tojson }};
+const RULES = {{ rules|tojson }};
+const DATASET_STATS = {{ dataset_stats|tojson }};
+const MODEL_ACCURACY = {{ model_accuracy|tojson }};
+</script>
+
+<nav>
+    <div class="nav-inner">
+        <div class="brand">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="BadrunScreen">
+            <span>Badrun<b>Screen</b></span>
+        </div>
+        <div class="nav-links">
+            <a href="#beranda">Beranda</a>
+            <a href="#dashboard">Dashboard</a>
+            <a href="#skrining">Skrining</a>
+            <a href="#penyakit">Penyakit</a>
+            <a href="#tools">Tools</a>
+        </div>
+    </div>
+</nav>
+
+<div class="wrap" id="beranda">
+    <!-- HERO -->
+    <div class="hero">
+        <div>
+            <div class="badge"><span class="dot"></span> Sistem Aktif &amp; Siap Menganalisis</div>
+            <h1>Skrining Kesehatan Cerdas dengan <span class="grad">Kecerdasan Buatan</span></h1>
+            <p>BadrunScreen menggabungkan <b>sistem pakar</b> (forward &amp; backward chaining) dengan <b>machine learning</b> (Random Forest) yang dilatih dari 1.400 kasus dataset — untuk memberikan analisis gejala yang cepat, transparan, dan lengkap dengan solusi penanganan.</p>
+            <div class="cta-row">
+                <a href="#skrining" class="btn btn-primary"><i class="fa-solid fa-stethoscope"></i> Mulai Skrining</a>
+                <a href="#dashboard" class="btn btn-ghost"><i class="fa-solid fa-chart-line"></i> Lihat Dashboard</a>
+            </div>
+        </div>
+        <div class="hero-art">
+            <img class="badrun-avatar" src="{{ url_for('static', filename='img/asisten_ai.png') }}" alt="Badrun - Asisten AI BadrunScreen">
+            <div class="hero-chip hc1"><i class="fa-solid fa-user-doctor"></i> Badrun · Asisten Medis AI</div>
+            <div class="hero-chip hc2"><i class="fa-solid fa-brain"></i> Hybrid AI Engine</div>
+        </div>
+    </div>
+
+    <!-- STAT STRIP -->
+    <div class="stat-strip">
+        <div class="stat-card">
+            <div class="ico"><i class="fa-solid fa-database"></i></div>
+            <div class="num" data-count="{{ dataset_stats.total_samples }}">0</div>
+            <div class="lbl">Total Kasus Dataset</div>
+        </div>
+        <div class="stat-card">
+            <div class="ico"><i class="fa-solid fa-virus"></i></div>
+            <div class="num" data-count="{{ dataset_stats.total_classes }}">0</div>
+            <div class="lbl">Penyakit Terdeteksi</div>
+        </div>
+        <div class="stat-card">
+            <div class="ico"><i class="fa-solid fa-list-check"></i></div>
+            <div class="num" data-count="{{ dataset_stats.total_features }}">0</div>
+            <div class="lbl">Gejala Terdaftar</div>
+        </div>
+        <div class="stat-card">
+            <div class="ico"><i class="fa-solid fa-bullseye"></i></div>
+            <div class="num"><span data-count-dec="{{ model_accuracy if model_accuracy else 0 }}">0</span><small>%</small></div>
+            <div class="lbl">Akurasi Model ML</div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard">
+        <div class="sec-head">
+            <div class="kicker">Dashboard</div>
+            <h2>Statistik Dataset &amp; Model</h2>
+            <p>Visualisasi data yang melatih kecerdasan BadrunScreen — transparan, terukur, dan dapat dipertanggungjawabkan secara akademik.</p>
+        </div>
+        <div class="chart-grid">
+            <div class="panel">
+                <h3><i class="fa-solid fa-chart-bar"></i> Distribusi Kasus per Penyakit</h3>
+                <div class="sub">Jumlah sampel data latih untuk tiap kelas penyakit (dataset seimbang)</div>
+                <div class="chart-box"><canvas id="chartDist"></canvas></div>
+            </div>
+            <div class="panel">
+                <h3><i class="fa-solid fa-chart-pie"></i> Tingkat Bahaya</h3>
+                <div class="sub">Proporsi penyakit dengan tanda bahaya (red flag)</div>
+                <div class="chart-box sm"><canvas id="chartRed"></canvas></div>
+            </div>
+        </div>
+        <div class="chart-row2">
+            <div class="panel">
+                <h3><i class="fa-solid fa-arrow-trend-up"></i> 10 Gejala Paling Sering Muncul</h3>
+                <div class="sub">Frekuensi kemunculan gejala di seluruh dataset ({{ dataset_stats.total_samples }} kasus)</div>
+                <div class="chart-box"><canvas id="chartSym"></canvas></div>
+            </div>
+            <div class="panel">
+                <h3><i class="fa-solid fa-microchip"></i> Cara Kerja Hybrid AI</h3>
+                <div class="sub">Dua mesin kecerdasan bekerja bersama di setiap analisis</div>
+                <div style="display:grid;gap:.8rem;margin-top:.4rem">
+                    <div style="background:rgba(45,212,191,.06);border:1px solid var(--card-border);border-radius:12px;padding:.95rem 1.1rem">
+                        <div style="font-weight:700;font-size:.9rem;margin-bottom:.3rem"><i class="fa-solid fa-diagram-project" style="color:var(--glow)"></i> Sistem Pakar <span style="color:var(--muted);font-weight:500">— bobot 60%</span></div>
+                        <div style="font-size:.83rem;color:var(--muted);line-height:1.65">Forward chaining mencocokkan gejala dengan aturan medis, backward chaining memverifikasi hipotesis penyakit.</div>
+                    </div>
+                    <div style="background:rgba(94,234,212,.06);border:1px solid rgba(94,234,212,.25);border-radius:12px;padding:.95rem 1.1rem">
+                        <div style="font-weight:700;font-size:.9rem;margin-bottom:.3rem"><i class="fa-solid fa-brain" style="color:var(--violet)"></i> Machine Learning <span style="color:var(--muted);font-weight:500">— bobot 40%</span></div>
+                        <div style="font-size:.83rem;color:var(--muted);line-height:1.65">Random Forest (50 trees) dilatih dari {{ dataset_stats.total_samples }} kasus dataset — akurasi validasi <b style="color:var(--glow)">{{ model_accuracy if model_accuracy else '-' }}%</b>.</div>
+                    </div>
+                    <div style="font-size:.8rem;color:var(--muted);line-height:1.65"><i class="fa-solid fa-circle-info" style="color:var(--warning)"></i> Jika kedua mesin sepakat pada satu penyakit, tingkat keyakinan akan meningkat.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SKRINING -->
+    <section id="skrining">
+        <div class="sec-head">
+            <div class="kicker">Skrining Gejala</div>
+            <h2>Cek Gejala Anda</h2>
+            <p>Pilih semua gejala yang Anda rasakan. Sistem akan menganalisis dengan hybrid AI dan memberikan hasil lengkap beserta solusi penanganan.</p>
+        </div>
+        <div class="screen-card">
+            <div id="symptomGroups"></div>
+            <div class="screen-actions">
+                <button class="btn btn-primary" id="btnAnalyze"><i class="fa-solid fa-magnifying-glass-chart"></i> Analisis Sekarang</button>
+                <button class="btn btn-ghost" id="btnReset"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                <span class="counter"><b id="selCount">0</b> gejala dipilih</span>
+            </div>
+            <div class="spinner" id="spinner"><div class="spin"></div> Menganalisis gejala dengan Hybrid AI...</div>
+        </div>
+        <div id="results"></div>
+    </section>
+
+    <!-- ENSIKLOPEDIA -->
+    <section id="penyakit">
+        <div class="sec-head">
+            <div class="kicker">Ensiklopedia</div>
+            <h2>7 Penyakit yang Dikenali</h2>
+            <p>Klik kartu penyakit untuk melihat detail gejala, solusi, obat, dan langkah pencegahan.</p>
+        </div>
+        <div class="disease-grid" id="diseaseGrid"></div>
+    </section>
+
+    <!-- TOOLS -->
+    <section id="tools">
+        <div class="sec-head">
+            <div class="kicker">Tools Kesehatan</div>
+            <h2>Perangkat Tambahan</h2>
+            <p>Utilitas pendukung untuk melengkapi pengalaman skrining Anda.</p>
+        </div>
+        <div class="tools-grid">
+            <div class="tool-card">
+                <h3><i class="fa-solid fa-calculator"></i> Kalkulator BMI</h3>
+                <div class="sub">Hitung Indeks Massa Tubuh Anda</div>
+                <div class="field"><label>Tinggi badan (cm)</label><input type="number" id="bmiHeight" placeholder="cth: 170"></div>
+                <div class="field"><label>Berat badan (kg)</label><input type="number" id="bmiWeight" placeholder="cth: 65"></div>
+                <button class="btn btn-primary" id="btnBmi" style="width:100%;justify-content:center"><i class="fa-solid fa-scale-balanced"></i> Hitung BMI</button>
+                <div class="bmi-result" id="bmiResult"></div>
+            </div>
+            <div class="tool-card">
+                <h3><i class="fa-solid fa-truck-medical"></i> Kontak Darurat</h3>
+                <div class="sub">Nomor penting kegawatdaruratan Indonesia</div>
+                <div class="emg-grid">
+                    <a class="emg" href="tel:118"><i class="fa-solid fa-phone-volume"></i><div><b>118</b><small>Ambulans</small></div></a>
+                    <a class="emg" href="tel:119"><i class="fa-solid fa-kit-medical"></i><div><b>119</b><small>Kegawatdaruratan</small></div></a>
+                    <a class="emg" href="tel:110"><i class="fa-solid fa-shield-halved"></i><div><b>110</b><small>Polisi</small></div></a>
+                    <a class="emg" href="tel:113"><i class="fa-solid fa-fire-extinguisher"></i><div><b>113</b><small>Pemadam</small></div></a>
+                </div>
+                <div class="disclaimer-box" style="margin-top:1rem"><i class="fa-solid fa-triangle-exclamation"></i> Jika mengalami sesak napas berat, nyeri dada, atau penurunan kesadaran — segera hubungi 118/119 atau ke IGD terdekat.</div>
+            </div>
+            <div class="tool-card">
+                <h3><i class="fa-solid fa-lightbulb"></i> Mitos vs Fakta</h3>
+                <div class="sub">Klik untuk mengungkap faktanya</div>
+                <div id="mythList"></div>
+            </div>
+            <div class="tool-card">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Skrining</h3>
+                <div class="sub">Tersimpan otomatis di perangkat Anda</div>
+                <div id="histWrap"><div class="hist-empty">Belum ada riwayat skrining.</div></div>
+                <button class="btn btn-ghost" id="btnClearHist" style="margin-top:1rem;font-size:.82rem;padding:.6rem 1.1rem"><i class="fa-solid fa-trash"></i> Hapus Riwayat</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<footer>
+    <div class="foot-inner">
+        <div class="brand">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="BadrunScreen" style="width:32px;height:32px">
+            <span>Badrun<b>Screen</b> AI</span>
+        </div>
+        <div class="foot-note"><i class="fa-solid fa-triangle-exclamation"></i> <b>Disclaimer medis:</b> BadrunScreen adalah alat skrining awal dan media pembelajaran — <b>bukan</b> diagnosis pasti dan tidak menggantikan pemeriksaan dokter. Dataset bersifat simulasi untuk kebutuhan akademik.</div>
+        <div class="foot-note" style="margin-top:.5rem;opacity:.75"><i class="fa-solid fa-code-branch"></i> BadrunScreen <b>v3.0</b> — Hybrid AI: Forward Chaining + Backward Chaining + Random Forest</div>
+    </div>
+</footer>
+
+<!-- MODAL DETAIL PENYAKIT -->
+<div class="modal-bg" id="modalBg">
+    <div class="modal">
+        <button class="x" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<!-- AI ASSISTANT -->
+<button id="bot-fab" title="Tanya Badrun, Asisten AI">
+    <img class="badrun-avatar" src="{{ url_for('static', filename='img/asisten_ai.png') }}" alt="Badrun">
+    <span class="ping"></span>
+</button>
+<div id="bot-panel">
+    <div class="bot-head">
+        <img class="badrun-avatar" src="{{ url_for('static', filename='img/asisten_ai.png') }}" alt="Badrun">
+        <div><div class="nm"><i class="fa-solid fa-stethoscope" style="color:var(--mint);font-size:.85rem"></i> Badrun</div><div class="st">Online — Asisten Medis AI</div></div>
+        <button class="x" id="botClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="bot-msgs"></div>
+    <div class="quick-row">
+        <button class="quick" data-q="cara pakai">Cara pakai</button>
+        <button class="quick" data-q="daftar penyakit">Daftar penyakit</button>
+        <button class="quick" data-q="apa itu DBD?">Apa itu DBD?</button>
+        <button class="quick" data-q="kontak darurat">Kontak darurat</button>
+    </div>
+    <div class="bot-input">
+        <input type="text" id="botText" placeholder="Tulis pesan...">
+        <button id="botSend"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+</div>
+<script>
+/* ============ DATA & KONFIGURASI ============ */
+const SYM_ICONS = {
+    G01:'fa-temperature-high', G02:'fa-user-injured', G03:'fa-head-side-virus',
+    G04:'fa-viruses', G05:'fa-face-dizzy', G06:'fa-lungs', G07:'fa-wind',
+    G08:'fa-comment-medical', G09:'fa-disease', G10:'fa-glass-water',
+    G11:'fa-toilet', G12:'fa-battery-quarter', G13:'fa-toilet-paper',
+    G14:'fa-mask-face', G15:'fa-lungs-virus', G16:'fa-bowl-food', G17:'fa-cloud'
+};
+const SYM_GROUPS = [
+    { name:'Gejala Umum', icon:'fa-user-check', codes:['G01','G02','G03','G12'] },
+    { name:'Saluran Pernapasan', icon:'fa-lungs', codes:['G06','G07','G08','G14','G15'] },
+    { name:'Pencernaan', icon:'fa-bowl-food', codes:['G05','G09','G13','G16','G17'] },
+    { name:'Kulit & Lainnya', icon:'fa-droplet', codes:['G04','G10','G11'] }
+];
+const DISEASE_ICONS = { P01:'fa-bug', P02:'fa-viruses', P03:'fa-disease', P04:'fa-lungs', P05:'fa-droplet', P06:'fa-shield-virus', P07:'fa-bowl-food' };
+const TABS = [
+    { id:'reco', label:'Rekomendasi', icon:'fa-clipboard-check' },
+    { id:'first_aid', label:'Pertolongan Pertama', icon:'fa-kit-medical' },
+    { id:'diet', label:'Pola Makan', icon:'fa-apple-whole' },
+    { id:'medication', label:'Obat', icon:'fa-pills' },
+    { id:'when_to_hospital', label:'Kapan ke RS', icon:'fa-truck-medical' },
+    { id:'prevention', label:'Pencegahan', icon:'fa-shield-halved' }
+];
+const MYTHS = [
+    { d:'DBD', m:'DBD hanya menyerang anak-anak, orang dewasa aman.', f:'Orang dewasa juga bisa terkena DBD dan justru berisiko mengalami dengue shock syndrome. Nyamuk Aedes aegypti menggigit siapa saja, tanpa pandang usia.' },
+    { d:'DBD', m:'Minum jus jambu biji merah bisa menyembuhkan DBD.', f:'Belum ada bukti ilmiah bahwa jambu biji menyembuhkan DBD. Trombosit umumnya naik sendiri saat memasuki fase pemulihan. Jambu biji hanya membantu hidrasi dan asupan vitamin C — tetap pantau trombosit dan segera ke RS bila ada tanda bahaya.' },
+    { d:'Influenza', m:'Flu itu sama dengan pilek biasa, tidak berbahaya.', f:'Influenza disebabkan virus influenza yang berbeda dari virus pilek biasa (common cold). Flu bisa menimbulkan komplikasi serius seperti pneumonia, terutama pada lansia, anak kecil, dan penderita penyakit kronis.' },
+    { d:'Tifoid', m:'Tipes menular lewat udara seperti flu.', f:'Tifoid (demam tifoid) menular lewat jalur fecal-oral: makanan atau minuman yang terkontaminasi bakteri Salmonella typhi, misalnya jajanan yang kebersihannya tidak terjaga atau air minum yang tidak dimasak.' },
+    { d:'ISPA', m:'Batuk pilek pasti butuh antibiotik biar cepat sembuh.', f:'ISPA sebagian besar disebabkan virus sehingga antibiotik tidak mempan. Antibiotik hanya diperlukan bila dokter memastikan ada infeksi bakteri sekunder. Pemakaian sembarangan justru memicu resistansi antibiotik.' },
+    { d:'Diabetes', m:'Diabetes hanya terjadi karena kebanyakan makan gula.', f:'Gula berlebih memang faktor risiko, tetapi diabetes juga dipengaruhi genetik, obesitas, kurang aktivitas fisik, dan usia. Orang yang jarang makan manis pun bisa terkena diabetes tipe 2.' },
+    { d:'COVID-19', m:'Sudah pernah kena COVID-19 berarti kebal selamanya.', f:'Kekebalan setelah infeksi menurun seiring waktu dan virus terus bermutasi, sehingga reinfeksi sangat mungkin terjadi. Vaksinasi dan booster tetap dianjurkan sesuai anjuran tenaga kesehatan.' },
+    { d:'Maag', m:'Maag pasti disebabkan telat makan.', f:'Penyebab utama maag/dispepsia adalah asam lambung berlebih, infeksi bakteri H. pylori, obat anti-nyeri golongan NSAID, stres, serta pola makan tidak teratur. Telat makan hanya memperparah gejala pada sebagian penderita, bukan penyebab tunggal.' }
+];
+
+/* ============ BACKGROUND PARTIKEL INTERAKTIF ============ */
+(function(){
+    const cv = document.getElementById('particles'), ctx = cv.getContext('2d');
+    let W, H, pts = [], mouse = {x:-999, y:-999};
+    function resize(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+    resize(); addEventListener('resize', resize);
+    addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    const N = Math.min(90, Math.floor(innerWidth / 16));
+    for (let i = 0; i < N; i++) pts.push({
+        x: Math.random()*innerWidth, y: Math.random()*innerHeight,
+        vx: (Math.random()-.5)*.4, vy: (Math.random()-.5)*.4,
+        r: Math.random()*2.2+.6, o: Math.random()*.5+.15,
+        c: Math.random() > .5 ? '45,212,191' : '94,234,212'
+    });
+    (function tick(){
+        ctx.clearRect(0,0,W,H);
+        for (const p of pts) {
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0 || p.x > W) p.vx *= -1;
+            if (p.y < 0 || p.y > H) p.vy *= -1;
+            const dx = p.x - mouse.x, dy = p.y - mouse.y, d = Math.hypot(dx,dy);
+            if (d < 130 && d > 0) { p.x += dx/d*1.4; p.y += dy/d*1.4; }
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, 7);
+            ctx.fillStyle = `rgba(${p.c},${p.o})`;
+            ctx.fill();
+        }
+        for (let i = 0; i < pts.length; i++) for (let j = i+1; j < pts.length; j++) {
+            const a = pts[i], b = pts[j], d = Math.hypot(a.x-b.x, a.y-b.y);
+            if (d < 120) { ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+                ctx.strokeStyle = `rgba(45,212,191,${(1-d/120)*.12})`; ctx.stroke(); }
+        }
+        requestAnimationFrame(tick);
+    })();
+})();
+
+/* ============ ANIMASI ANGKA STATISTIK ============ */
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = +el.dataset.count; let cur = 0;
+    const step = Math.max(1, Math.ceil(target / 60));
+    const iv = setInterval(() => { cur += step; if (cur >= target) { cur = target; clearInterval(iv); }
+        el.textContent = cur.toLocaleString('id-ID'); }, 24);
+});
+document.querySelectorAll('[data-count-dec]').forEach(el => {
+    const target = parseFloat(el.dataset.countDec); let cur = 0;
+    const iv = setInterval(() => { cur += target/50; if (cur >= target) { cur = target; clearInterval(iv); }
+        el.textContent = cur.toFixed(1).replace('.', ','); }, 30);
+});
+
+/* ============ CHARTS ============ */
+if (typeof Chart !== 'undefined') {
+Chart.defaults.color = '#93a1b8';
+Chart.defaults.font.family = 'Inter, sans-serif';
+(function(){
+    const labels = Object.keys(DATASET_STATS.class_distribution);
+    const names = labels.map(k => DISEASES[k] ? DISEASES[k].name : k);
+    const vals = labels.map(k => DATASET_STATS.class_distribution[k]);
+    new Chart(document.getElementById('chartDist'), { type:'bar',
+        data:{ labels: names, datasets:[{ data: vals,
+            backgroundColor: labels.map((_,i)=>`hsla(${168+i*14},85%,55%,.55)`),
+            borderColor: labels.map((_,i)=>`hsla(${168+i*14},85%,60%,1)`),
+            borderWidth: 1, borderRadius: 8 }]},
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ display:false } },
+            scales:{ y:{ beginAtZero:true, grid:{ color:'rgba(255,255,255,.06)' }, ticks:{ stepSize:50 } },
+                     x:{ grid:{ display:false }, ticks:{ font:{ size:10 }, maxRotation: 35 } } } } });
+
+    const redCount = Object.keys(DISEASES).filter(k => DISEASES[k].red_flag).length;
+    const safeCount = Object.keys(DISEASES).length - redCount;
+    new Chart(document.getElementById('chartRed'), { type:'doughnut',
+        data:{ labels:['Red Flag (Berbahaya)','Tanpa Red Flag'],
+            datasets:[{ data:[redCount, safeCount],
+                backgroundColor:['rgba(248,113,113,.7)','rgba(45,212,191,.55)'],
+                borderColor:['#f87171','#2dd4bf'], borderWidth:2 }]},
+        options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+            plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, padding:14 } } } } });
+
+    const freq = Object.entries(DATASET_STATS.feature_frequency || {}).slice(0,10);
+    new Chart(document.getElementById('chartSym'), { type:'bar',
+        data:{ labels: freq.map(([k]) => SYMPTOMS[k] || k),
+            datasets:[{ data: freq.map(([,v]) => v),
+                backgroundColor:'rgba(45,212,191,.45)', borderColor:'#2dd4bf',
+                borderWidth:1, borderRadius:6 }]},
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ display:false } },
+            scales:{ x:{ beginAtZero:true, grid:{ color:'rgba(255,255,255,.06)' } },
+                     y:{ grid:{ display:false }, ticks:{ font:{ size:11 } } } } } });
+})(); // end charts
+} // end if Chart available
+
+/* ============ GEJALA CHIPS ============ */
+const selected = new Set();
+(function(){
+    const wrap = document.getElementById('symptomGroups');
+    SYM_GROUPS.forEach(g => {
+        const div = document.createElement('div');
+        div.className = 'sym-group';
+        div.innerHTML = `<h4><i class="fa-solid ${g.icon}"></i> ${g.name}</h4><div class="chips"></div>`;
+        const chips = div.querySelector('.chips');
+        g.codes.forEach(code => {
+            const c = document.createElement('div');
+            c.className = 'chip'; c.dataset.code = code;
+            c.innerHTML = `<i class="fa-solid ${SYM_ICONS[code]||'fa-circle-dot'}"></i> ${SYMPTOMS[code]||code}`;
+            c.onclick = () => { c.classList.toggle('on');
+                c.classList.contains('on') ? selected.add(code) : selected.delete(code);
+                document.getElementById('selCount').textContent = selected.size; };
+            chips.appendChild(c);
+        });
+        wrap.appendChild(div);
+    });
+    document.getElementById('btnReset').onclick = () => {
+        selected.clear();
+        document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
+        document.getElementById('selCount').textContent = '0';
+        document.getElementById('results').classList.remove('show');
+    };
+})();
+
+/* ============ ANALISIS ============ */
+document.getElementById('btnAnalyze').onclick = async () => {
+    if (selected.size === 0) { alert('Pilih minimal 1 gejala dulu ya.'); return; }
+    const sp = document.getElementById('spinner'); sp.classList.add('show');
+    const box = document.getElementById('results'); box.classList.remove('show'); box.innerHTML = '';
+    try {
+        const r = await fetch('/analyze', { method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ symptoms:[...selected] }) });
+        const data = await r.json();
+        sp.classList.remove('show');
+        if (data.error) { box.innerHTML = `<div class="result-card"><i class="fa-solid fa-circle-info"></i> ${data.error}</div>`; box.classList.add('show'); return; }
+        renderResults(data.results, data.reasoning);
+        saveHistory(data.results[0]);
+    } catch(e) { sp.classList.remove('show'); alert('Gagal terhubung ke server.'); }
+};
+
+function solList(items, cls='', icon='fa-circle-check') {
+    if (!items || !items.length) return '<p style="color:var(--muted);font-size:.86rem">Belum ada data.</p>';
+    return `<ul class="sol-list ${cls}">` + items.map(t=>`<li><i class="fa-solid ${icon}"></i><span>${t}</span></li>`).join('') + '</ul>';
+}
+
+function renderReasoning(reasoning) {
+    if (!reasoning) return '';
+    const fwd = (reasoning.forward_trace || []).map((st, i) => {
+        const badge = st.fired
+            ? '<span class="pill ml"><i class="fa-solid fa-bolt"></i> ATURAN MENYALA</span>'
+            : `<span class="pill">${st.matched.length}/${st.conditions.length} kondisi cocok</span>`;
+        const conds = st.conditions.map(c => {
+            const ok = st.matched.includes(c);
+            return `<span class="tag ${ok ? 'ok' : 'miss'}">${ok ? '<i class="fa-solid fa-check"></i> ' : ''}${st.condition_names[st.conditions.indexOf(c)]}</span>`;
+        }).join('');
+        return `<div class="reason-step"><div class="reason-step-head"><b>Langkah ${i + 1} — Aturan ${st.rule_id}</b> ${badge}</div>
+            <div class="reason-sub">IF ${conds} THEN <b>${st.disease_name}</b></div></div>`;
+    }).join('');
+    const nameOf = {};
+    (reasoning.forward_trace || []).forEach(st => { nameOf[st.disease_id] = st.disease_name; });
+    const bwd = Object.keys(reasoning.backward_proofs || {}).map(did => {
+        const steps = reasoning.backward_proofs[did].map(p => {
+            const ic = p.status === 'ok' ? 'fa-circle-check' : p.status === 'fail' ? 'fa-circle-xmark' : p.status === 'goal' ? 'fa-crosshairs' : 'fa-circle-half-stroke';
+            const cls = p.status === 'ok' ? 'ok' : p.status === 'fail' ? 'miss' : '';
+            return `<div class="proof-line ${cls}" style="margin-left:${p.depth * 1.4}rem"><i class="fa-solid ${ic}"></i> ${p.text}</div>`;
+        }).join('');
+        return `<div class="reason-bwd"><b>${nameOf[did] || did}</b>${steps}</div>`;
+    }).join('');
+    return `<details class="reason-card" open><summary><i class="fa-solid fa-brain"></i> Jalur Penalaran AI <span class="reason-hint">— klik untuk melihat cara sistem berpikir (Forward &amp; Backward Chaining)</span></summary>
+        <div class="reason-body">
+            <h4><i class="fa-solid fa-arrow-right-to-bracket"></i> 1. Forward Chaining <span class="reason-tag">data-driven: dari gejala menuju penyakit</span></h4>
+            <div class="reason-sub" style="margin-bottom:.6rem">Fakta awal = gejala yang kamu centang. Tiap aturan diuji berurutan; aturan yang semua kondisinya terpenuhi <b>menyala</b> dan menyimpulkan penyakitnya.</div>
+            ${fwd}
+            <h4 style="margin-top:1.2rem"><i class="fa-solid fa-arrow-right-from-bracket"></i> 2. Backward Chaining <span class="reason-tag">goal-driven: tiap hipotesis diverifikasi mundur ke fakta</span></h4>
+            <div class="reason-sub" style="margin-bottom:.6rem">Setiap kandidat penyakit dijadikan hipotesis, lalu sub-goal kondisinya dicek satu per satu terhadap gejala — termasuk verifikasi rekursif bila ada fakta turunan.</div>
+            ${bwd}
+        </div></details>`;
+}
+
+function renderResults(results, reasoning) {
+    const box = document.getElementById('results');
+    let html = `<div class="sec-head" style="margin-bottom:1.4rem"><div class="kicker">Hasil Analisis</div>
+        <h2 style="font-size:1.5rem">Ditemukan ${results.length} Kemungkinan</h2></div>`
+        + renderReasoning(reasoning);
+    results.forEach((r, i) => {
+        const pills = [];
+        if (r.ml_supported) pills.push('<span class="pill ml"><i class="fa-solid fa-brain"></i> Didukung ML</span>');
+        if (r.backward_verified) pills.push('<span class="pill ml"><i class="fa-solid fa-crosshairs"></i> Terverifikasi Backward</span>');
+        if (r.red_flag) pills.push('<span class="pill red"><i class="fa-solid fa-triangle-exclamation"></i> RED FLAG</span>');
+        const tabs = TABS.map((t,ti)=>`<button class="tab-btn ${ti===0?'active':''}" data-tab="${t.id}" data-idx="${i}"><i class="fa-solid ${t.icon}"></i> ${t.label}</button>`).join('');
+        const panes = TABS.map((t,ti)=>{
+            let body = '';
+            if (t.id === 'reco') body = `<div class="reco-box">${r.recommendation||'-'}</div>`;
+            else if (t.id === 'first_aid') body = solList(r.first_aid);
+            else if (t.id === 'diet') body = solList(r.diet, '', 'fa-apple-whole');
+            else if (t.id === 'medication') body = solList(r.medication, 'drug', 'fa-pills') +
+                `<div class="disclaimer-box"><i class="fa-solid fa-triangle-exclamation"></i>${r.medication_disclaimer||''}</div>`;
+            else if (t.id === 'when_to_hospital') body = solList(r.when_to_hospital, 'warn', 'fa-truck-medical');
+            else body = solList(r.prevention, '', 'fa-shield-halved');
+            return `<div class="tab-pane ${ti===0?'active':''}" data-pane="${t.id}" data-idx="${i}">${body}</div>`;
+        }).join('');
+        html += `<div class="result-card ${i===0?'top':''}">
+            <div class="res-head">
+                <div class="res-title">
+                    <div class="res-ico"><i class="fa-solid ${DISEASE_ICONS[r.disease_id]||'fa-stethoscope'}"></i></div>
+                    <div><div class="rank">Kandidat #${i+1}</div><h3>${r.disease_name}</h3></div>
+                </div>
+                <div class="badges">${pills.join('')}</div>
+            </div>
+            <div class="conf-lbl"><span>Tingkat Keyakinan Hybrid AI</span><b>${r.confidence}%</b></div>
+            <div class="conf-bar"><div class="conf-fill" data-w="${r.confidence}"></div></div>
+            <div style="font-size:.8rem;color:var(--muted);margin-bottom:.3rem"><b style="color:var(--success)">${r.matched_count}</b> gejala cocok dari ${r.total_conditions} kriteria:</div>
+            <div class="sym-tags">
+                ${r.matched_symptoms.map(s=>`<span class="tag ok"><i class="fa-solid fa-check"></i> ${s}</span>`).join('')}
+                ${r.missing_symptoms.map(s=>`<span class="tag miss">${s}</span>`).join('')}
+            </div>
+            <div class="tabs">${tabs}</div>${panes}
+        </div>`;
+    });
+    box.innerHTML = html;
+    box.classList.add('show');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>
+        box.querySelectorAll('.conf-fill').forEach(f=>f.style.width = f.dataset.w + '%')));
+    box.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>{
+        const idx = b.dataset.idx;
+        box.querySelectorAll(`.tab-btn[data-idx="${idx}"]`).forEach(x=>x.classList.remove('active'));
+        box.querySelectorAll(`.tab-pane[data-idx="${idx}"]`).forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        box.querySelector(`.tab-pane[data-tab="${b.dataset.tab}"][data-idx="${idx}"]`).classList.add('active');
+    });
+    box.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ============ ENSIKLOPEDIA ============ */
+function openDiseaseModal(did) {
+    fetch('/backward_chaining', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ disease_id: did, symptoms: [] }) })
+    .then(r=>r.json()).then(d => {
+        const dis = DISEASES[did];
+        const sec = (title, icon, items, cls='', ic='fa-circle-check') =>
+            items && items.length ? `<h4><i class="fa-solid ${icon}"></i> ${title}</h4>` + solList(items, cls, ic) : '';
+        document.getElementById('modalBody').innerHTML = `
+            <h3><i class="fa-solid ${DISEASE_ICONS[did]||'fa-stethoscope'}" style="color:var(--glow)"></i> ${d.disease_name}</h3>
+            <div class="m-sub">${dis.red_flag ? '<span class="pill red"><i class="fa-solid fa-triangle-exclamation"></i> RED FLAG — berpotensi berbahaya</span>' : '<span class="pill ml"><i class="fa-solid fa-circle-check"></i> Risiko umum</span>'}</div>
+            <div class="reco-box">${dis.recommendation||''}</div>
+            <h4><i class="fa-solid fa-list-check"></i> Gejala Khas</h4>
+            <div class="sym-tags">${(d.required_symptoms||[]).map(s=>`<span class="tag ok">${s}</span>`).join('')}</div>
+            ${sec('Pertolongan Pertama','fa-kit-medical', d.first_aid)}
+            ${sec('Pola Makan','fa-apple-whole', d.diet, '', 'fa-apple-whole')}
+            ${sec('Obat Umum','fa-pills', d.medication, 'drug', 'fa-pills')}
+            ${d.medication && d.medication.length ? `<div class="disclaimer-box"><i class="fa-solid fa-triangle-exclamation"></i>${d.medication_disclaimer||''}</div>` : ''}
+            ${sec('Kapan Harus ke RS','fa-truck-medical', d.when_to_hospital, 'warn', 'fa-truck-medical')}
+            ${sec('Pencegahan','fa-shield-halved', d.prevention, '', 'fa-shield-halved')}`;
+        document.getElementById('modalBg').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    });
+}
+(function(){
+    const grid = document.getElementById('diseaseGrid');
+    Object.keys(DISEASES).forEach(did => {
+        const d = DISEASES[did];
+        const card = document.createElement('div');
+        card.className = 'd-card';
+        card.innerHTML = `${d.red_flag?'<span class="flag" title="Red flag"><i class="fa-solid fa-triangle-exclamation"></i></span>':''}
+            <div class="d-ico"><i class="fa-solid ${DISEASE_ICONS[did]||'fa-stethoscope'}"></i></div>
+            <h3>${d.name}</h3><p>${d.recommendation||''}</p>
+            <span class="more">Lihat detail <i class="fa-solid fa-arrow-right"></i></span>`;
+        card.onclick = () => openDiseaseModal(did);
+        grid.appendChild(card);
+    });
+    document.getElementById('modalClose').onclick = closeModal;
+    document.getElementById('modalBg').onclick = e => { if (e.target.id === 'modalBg') closeModal(); };
+    function closeModal(){ document.getElementById('modalBg').classList.remove('show'); document.body.style.overflow=''; }
+})();
+
+/* ============ TOOLS: BMI ============ */
+document.getElementById('btnBmi').onclick = () => {
+    const h = parseFloat(document.getElementById('bmiHeight').value);
+    const w = parseFloat(document.getElementById('bmiWeight').value);
+    const out = document.getElementById('bmiResult');
+    if (!h || !w || h <= 0 || w <= 0) { alert('Isi tinggi dan berat badan dengan benar ya.'); return; }
+    const bmi = w / Math.pow(h/100, 2);
+    let cat, tip, color;
+    if (bmi < 18.5) { cat='Kurus (Underweight)'; color='var(--warning)'; tip='Perbanyak asupan kalori sehat: nasi, lauk berprotein, susu, dan buah. Konsultasi ke ahli gizi bila perlu.'; }
+    else if (bmi < 25) { cat='Normal (Ideal)'; color='var(--success)'; tip='Pertahankan! Jaga pola makan seimbang dan olahraga rutin minimal 150 menit/minggu.'; }
+    else if (bmi < 30) { cat='Gemuk (Overweight)'; color='var(--warning)'; tip='Kurangi makanan manis & berminyak, perbanyak sayur dan aktivitas fisik harian.'; }
+    else { cat='Obesitas'; color='var(--danger)'; tip='Disarankan konsultasi ke dokter/ahli gizi untuk program penurunan berat badan yang aman.'; }
+    out.innerHTML = `<div class="val">${bmi.toFixed(1).replace('.',',')}</div>
+        <div class="cat" style="color:${color}">${cat}</div><div class="tip">${tip}</div>`;
+    out.classList.add('show');
+};
+
+/* ============ TOOLS: MITOS ============ */
+(function(){
+    const w = document.getElementById('mythList');
+    MYTHS.forEach(x => {
+        const d = document.createElement('div');
+        d.className = 'myth-card';
+        d.innerHTML = `<div class="myth"><i class="fa-solid fa-circle-xmark"></i><span><span class="myth-tag">${x.d}</span> ${x.m}</span></div><div class="fact"><b>Fakta:</b> ${x.f}</div>`;
+        d.onclick = () => d.classList.toggle('open');
+        w.appendChild(d);
+    });
+})();
+
+/* ============ TOOLS: RIWAYAT ============ */
+function getHist(){ try { return JSON.parse(localStorage.getItem('badrun_hist')||'[]'); } catch(e){ return []; } }
+function renderHist(){
+    const w = document.getElementById('histWrap'), h = getHist();
+    if (!h.length) { w.innerHTML = '<div class="hist-empty">Belum ada riwayat skrining.</div>'; return; }
+    w.innerHTML = `<table class="hist-table"><tr><th>Waktu</th><th>Hasil Teratas</th><th>Keyakinan</th></tr>` +
+        h.slice(0,8).map(x=>`<tr><td>${x.date}</td><td>${x.disease}</td><td style="color:var(--glow);font-weight:700">${x.conf}%</td></tr>`).join('') + '</table>';
+}
+function saveHistory(top){
+    const h = getHist();
+    h.unshift({ date: new Date().toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}),
+        disease: top.disease_name, conf: top.confidence });
+    localStorage.setItem('badrun_hist', JSON.stringify(h.slice(0,20)));
+    renderHist();
+}
+document.getElementById('btnClearHist').onclick = () => { localStorage.removeItem('badrun_hist'); renderHist(); };
+renderHist();
+
+/* ============ CHATBOT BADRUN ============ */
+(function(){
+    const fab = document.getElementById('bot-fab'), panel = document.getElementById('bot-panel');
+    const msgs = document.getElementById('bot-msgs'), input = document.getElementById('botText');
+    fab.onclick = () => { panel.classList.toggle('show');
+        if (panel.classList.contains('show') && !msgs.children.length)
+            botSay('Halo! Saya <b>Badrun</b>, asisten medis AI BadrunScreen. Tanya saya soal cara pakai aplikasi, 7 penyakit yang dikenali, atau kontak darurat.'); };
+    document.getElementById('botClose').onclick = () => panel.classList.remove('show');
+    const botAvatar = document.querySelector('.bot-head img');
+    // --- Badrun berkedip: tukar ke frame mata-tertutup tiap 3-6 detik ---
+    const AVATAR_OPEN = "{{ url_for('static', filename='img/asisten_ai.png') }}";
+    const AVATAR_BLINK = "{{ url_for('static', filename='img/asisten_ai_blink.png') }}";
+    const _blinkPreload = new Image(); _blinkPreload.src = AVATAR_BLINK;
+    (function badrunBlink(){
+        setTimeout(() => {
+            document.querySelectorAll('img.badrun-avatar').forEach(im => { im.src = AVATAR_BLINK; });
+            setTimeout(() => {
+                document.querySelectorAll('img.badrun-avatar').forEach(im => { im.src = AVATAR_OPEN; });
+                badrunBlink();
+            }, 160);
+        }, 2800 + Math.random() * 3200);
+    })();
+    function botSpeaking(on){ if (botAvatar) botAvatar.classList.toggle('speaking', on); }
+    function botSay(html){ const d=document.createElement('div'); d.className='msg bot'; d.innerHTML=html;
+        msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+        botSpeaking(true); setTimeout(() => botSpeaking(false), 2200); }
+    function userSay(t){ const d=document.createElement('div'); d.className='msg user'; d.textContent=t;
+        msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; }
+    async function send(text){
+        const t = (text || input.value).trim(); if(!t) return;
+        userSay(t); input.value = '';
+        const tp = document.createElement('div'); tp.className='msg bot typing';
+        tp.innerHTML='<span></span><span></span><span></span>'; msgs.appendChild(tp); msgs.scrollTop = msgs.scrollHeight;
+        botSpeaking(true);
+        try { const r = await fetch('/chatbot',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({message:t})});
+            const d = await r.json(); tp.remove(); botSpeaking(false); botSay(d.reply);
+        } catch(e){ tp.remove(); botSpeaking(false); botSay('Ups, koneksi bermasalah. Coba lagi ya.'); }
+    }
+    document.getElementById('botSend').onclick = () => send();
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+    document.querySelectorAll('.quick').forEach(q => q.onclick = () => send(q.dataset.q));
+})();
+</script>
+</body>
+</html>
